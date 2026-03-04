@@ -28,15 +28,33 @@ pipeline {
                 sh '''
                     set -e
                     command -v git >/dev/null 2>&1 || { echo "git manquant sur Jenkins"; exit 1; }
-                    command -v php >/dev/null 2>&1 || { echo "php manquant sur Jenkins"; exit 1; }
-                    command -v composer >/dev/null 2>&1 || { echo "composer manquant sur Jenkins"; exit 1; }
+                    if command -v php >/dev/null 2>&1 && command -v composer >/dev/null 2>&1; then
+                      echo "Mode CI: php/composer locaux"
+                    elif command -v docker >/dev/null 2>&1; then
+                      echo "Mode CI: docker composer:2"
+                    else
+                      echo "Ni php/composer ni docker disponibles sur Jenkins"
+                      exit 1
+                    fi
                 '''
             }
         }
 
         stage('Install Laravel dependencies') {
             steps {
-                sh 'composer install --no-interaction --prefer-dist'
+                sh '''
+                    set -e
+                    if command -v composer >/dev/null 2>&1; then
+                      composer install --no-interaction --prefer-dist
+                    else
+                      docker run --rm \
+                        -u "$(id -u):$(id -g)" \
+                        -v "$PWD":/app \
+                        -w /app \
+                        composer:2 \
+                        composer install --no-interaction --prefer-dist
+                    fi
+                '''
             }
         }
 
@@ -63,20 +81,53 @@ pipeline {
                       echo "MAIL_MAILER=log"
                     } >> .env
 
-                    php artisan key:generate --force
+                    if command -v php >/dev/null 2>&1; then
+                      php artisan key:generate --force
+                    else
+                      docker run --rm \
+                        -u "$(id -u):$(id -g)" \
+                        -v "$PWD":/app \
+                        -w /app \
+                        composer:2 \
+                        php artisan key:generate --force
+                    fi
                 '''
             }
         }
 
         stage('Migrate') {
             steps {
-                sh 'php artisan migrate --force'
+                sh '''
+                    set -e
+                    if command -v php >/dev/null 2>&1; then
+                      php artisan migrate --force
+                    else
+                      docker run --rm \
+                        -u "$(id -u):$(id -g)" \
+                        -v "$PWD":/app \
+                        -w /app \
+                        composer:2 \
+                        php artisan migrate --force
+                    fi
+                '''
             }
         }
 
         stage('Run tests') {
             steps {
-                sh 'php artisan test'
+                sh '''
+                    set -e
+                    if command -v php >/dev/null 2>&1; then
+                      php artisan test
+                    else
+                      docker run --rm \
+                        -u "$(id -u):$(id -g)" \
+                        -v "$PWD":/app \
+                        -w /app \
+                        composer:2 \
+                        php artisan test
+                    fi
+                '''
             }
         }
 
