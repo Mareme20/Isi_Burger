@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   app:
@@ -13,7 +11,8 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: true
-      APP_URL: http://localhost:8000
+      APP_URL: http://localhost:8002
+      LOG_CHANNEL: stderr
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
@@ -24,7 +23,10 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - .:/var/www/html    
+      - .:/var/www/html
+      - app_logs:/var/www/html/storage/logs
+      - app_framework:/var/www/html/storage/framework
+      - app_cache:/var/www/html/bootstrap/cache
     networks:
       - isi-burger-net
 
@@ -63,6 +65,9 @@ services:
 
 volumes:
   db_data:
+  app_logs:
+  app_framework:
+  app_cache:
 
 networks:
   isi-burger-net:
