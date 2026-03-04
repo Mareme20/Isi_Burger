@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class RegisteredUserController extends Controller
 {
@@ -19,9 +20,10 @@ class RegisteredUserController extends Controller
         return view('auth.register');
     }
 
-    public function store(RegisterRequest $request): RedirectResponse
+public function store(RegisterRequest $request): RedirectResponse
 {
     $validated = $request->validated();
+    $role = $validated['role'] ?? 'client';
 
     $user = User::create([
         'name' => $validated['name'],
@@ -29,17 +31,18 @@ class RegisteredUserController extends Controller
         'password' => Hash::make($validated['password']),
     ]);
 
-    $user->assignRole($validated['role']);
+    Role::findOrCreate($role, 'web');
+    $user->assignRole($role);
 
     event(new Registered($user));
 
     Auth::login($user);
 
-    if ($user->hasRole('gestionnaire')) {
+    if ($role === 'gestionnaire') {
         return redirect()->route('admin.dashboard');
     }
 
-    return redirect()->route('catalogue.index');
+    return redirect(RouteServiceProvider::HOME);
 }
 
 }

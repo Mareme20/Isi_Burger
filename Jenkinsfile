@@ -82,14 +82,14 @@ pipeline {
                     } >> .env
 
                     if command -v php >/dev/null 2>&1; then
-                      php artisan key:generate --force
+                      APP_ENV=testing php artisan key:generate --force
                     else
                       docker run --rm \
                         -u "$(id -u):$(id -g)" \
                         -v "$PWD":/app \
                         -w /app \
                         composer:2 \
-                        php artisan key:generate --force
+                        sh -lc 'APP_ENV=testing php artisan key:generate --force'
                     fi
                 '''
             }
@@ -100,14 +100,14 @@ pipeline {
                 sh '''
                     set -e
                     if command -v php >/dev/null 2>&1; then
-                      php artisan migrate --force
+                      APP_ENV=testing php artisan migrate --force
                     else
                       docker run --rm \
                         -u "$(id -u):$(id -g)" \
                         -v "$PWD":/app \
                         -w /app \
                         composer:2 \
-                        php artisan migrate --force
+                        sh -lc 'APP_ENV=testing php artisan migrate --force'
                     fi
                 '''
             }
@@ -118,14 +118,14 @@ pipeline {
                 sh '''
                     set -e
                     if command -v php >/dev/null 2>&1; then
-                      php artisan test
+                      APP_ENV=testing php artisan test
                     else
                       docker run --rm \
                         -u "$(id -u):$(id -g)" \
                         -v "$PWD":/app \
                         -w /app \
                         composer:2 \
-                        php artisan test
+                        sh -lc 'APP_ENV=testing php artisan test'
                     fi
                 '''
             }
