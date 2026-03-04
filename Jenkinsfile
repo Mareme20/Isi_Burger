@@ -15,7 +15,16 @@ pipeline {
     environment {
         COMPOSER_ALLOW_SUPERUSER = '1'
     }
- 
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                deleteDir()
+                git branch: "${params.BRANCH_NAME}", url: "${params.REPO_URL}"
+            }
+        }
+
         stage('Install Laravel dependencies') {
             steps {
                 sh '''
@@ -43,7 +52,7 @@ pipeline {
 
                     {
                       echo "DB_CONNECTION=sqlite"
-                      echo "DB_DATABASE=$WORKSPACE/database/database.sqlite"
+                      echo "DB_DATABASE=/app/database/database.sqlite"
                       echo "CACHE_STORE=array"
                       echo "SESSION_DRIVER=array"
                       echo "QUEUE_CONNECTION=sync"
@@ -75,7 +84,7 @@ pipeline {
 
         stage('Build Docker image') {
             steps {
-                sh 'docker build -t "${DOCKER_IMAGE}" .'
+                sh 'docker build -t "${params.DOCKER_IMAGE}" .'
             }
         }
     }
