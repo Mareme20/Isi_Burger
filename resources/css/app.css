@@ -1,0 +1,163 @@
+@import url('https://fonts.bunny.net/css?family=sora:400,500,600,700,800|manrope:400,500,600,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --bg-warm: #f7efe4;
+        --bg-sand: #f2dcc2;
+        --ink: #1f2937;
+        --muted: #5b6472;
+        --brand: #d65a31;
+        --brand-strong: #b9441d;
+        --brand-soft: #ffe6d2;
+        --card: rgba(255, 255, 255, 0.82);
+        --line: rgba(31, 41, 55, 0.12);
+    }
+
+    body {
+        font-family: 'Manrope', sans-serif;
+        color: var(--ink);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: 'Sora', sans-serif;
+        letter-spacing: -0.02em;
+    }
+}
+
+@layer components {
+    .app-body {
+        background:
+            radial-gradient(circle at 10% 10%, #ffd4b3 0%, transparent 34%),
+            radial-gradient(circle at 90% 0%, #ffe7cc 0%, transparent 32%),
+            linear-gradient(140deg, var(--bg-warm), var(--bg-sand));
+    }
+
+    .app-sidebar {
+        @apply border-r backdrop-blur-xl;
+        background: var(--card);
+        border-color: var(--line);
+    }
+
+    .glass-panel {
+        @apply rounded-3xl border shadow-sm backdrop-blur-xl;
+        background: var(--card);
+        border-color: var(--line);
+    }
+
+    .menu-link {
+        @apply block rounded-2xl px-4 py-2.5 text-sm font-semibold transition;
+        color: var(--muted);
+    }
+
+    .menu-link:hover {
+        @apply -translate-y-px;
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.65);
+    }
+
+    .menu-link-active {
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+        box-shadow: 0 10px 26px rgba(182, 68, 29, 0.25);
+    }
+
+    .top-link {
+        @apply rounded-full px-4 py-2 text-sm font-semibold transition;
+        color: var(--muted);
+    }
+
+    .top-link:hover {
+        background: rgba(255, 255, 255, 0.65);
+        color: var(--ink);
+    }
+
+    .top-link-active {
+        color: #fff;
+        background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+        box-shadow: 0 8px 20px rgba(182, 68, 29, 0.22);
+    }
+
+    .form-label {
+        @apply mb-1.5 block text-sm font-semibold;
+        color: #334155;
+    }
+
+    .form-input {
+        @apply w-full rounded-xl border px-4 py-2.5 shadow-sm transition;
+        border-color: rgba(148, 163, 184, 0.45);
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .form-input:focus {
+        border-color: rgba(214, 90, 49, 0.85);
+        box-shadow: 0 0 0 4px rgba(214, 90, 49, 0.18);
+        outline: none;
+    }
+
+    .form-error {
+        @apply text-sm font-medium text-red-600;
+    }
+
+    .btn-primary {
+        @apply inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition;
+        background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+        box-shadow: 0 10px 25px rgba(182, 68, 29, 0.24);
+    }
+
+    .btn-primary:hover {
+        @apply -translate-y-px;
+        box-shadow: 0 14px 30px rgba(182, 68, 29, 0.28);
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold transition;
+        border-color: rgba(148, 163, 184, 0.45);
+        color: #334155;
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .btn-secondary:hover {
+        @apply -translate-y-px;
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .btn-danger {
+        @apply inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition;
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        box-shadow: 0 10px 25px rgba(185, 28, 28, 0.22);
+    }
+
+    .btn-danger:hover {
+        @apply -translate-y-px;
+    }
+
+    .menu-dropdown-panel {
+        @apply overflow-hidden rounded-2xl border bg-white/95 shadow-xl backdrop-blur-xl;
+        border-color: var(--line);
+    }
+
+    .menu-dropdown-link {
+        @apply block w-full px-4 py-2.5 text-sm font-medium transition;
+        color: #334155;
+    }
+
+    .menu-dropdown-link:hover {
+        @apply bg-orange-50;
+        color: #9a3412;
+    }
+
+    .auth-shell {
+        @apply rounded-3xl border p-7 shadow-2xl backdrop-blur-xl sm:p-9;
+        background: var(--card);
+        border-color: var(--line);
+    }
+}
