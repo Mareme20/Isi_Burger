@@ -15,16 +15,7 @@ pipeline {
     environment {
         COMPOSER_ALLOW_SUPERUSER = '1'
     }
-
-    stages {
-        stage('Checkout (GitHub)') {
-            steps {
-                deleteDir()
-                git branch: "${params.BRANCH_NAME}", url: "${params.REPO_URL}"
-                sh 'git log -1 --oneline'
-            }
-        }
-
+ 
         stage('Install Laravel dependencies') {
             steps {
                 sh '''
