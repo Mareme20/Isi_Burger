@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent any
 
     options {
         timestamps()
@@ -18,7 +18,6 @@ pipeline {
 
     stages {
         stage('Checkout (GitHub)') {
-            agent any
             steps {
                 deleteDir()
                 git branch: "${params.BRANCH_NAME}", url: "${params.REPO_URL}"
@@ -27,66 +26,56 @@ pipeline {
         }
 
         stage('Install Laravel dependencies') {
-            agent {
-                docker {
-                    image 'composer:2'
-                    reuseNode true
-                    args '-u root:root'
-                }
-            }
             steps {
-                sh 'composer install --no-interaction --prefer-dist'
+                script {
+                    docker.image('composer:2').inside('-u root:root') {
+                        sh 'composer install --no-interaction --prefer-dist'
+                    }
+                }
             }
         }
 
         stage('Prepare Laravel') {
-            agent {
-                docker {
-                    image 'composer:2'
-                    reuseNode true
-                    args '-u root:root'
-                }
-            }
             steps {
-                sh '''
-                    if [ -f .env.example ]; then
-                      cp .env.example .env
-                    else
-                      touch .env
-                    fi
+                script {
+                    docker.image('composer:2').inside('-u root:root') {
+                        sh '''
+                            if [ -f .env.example ]; then
+                              cp .env.example .env
+                            else
+                              touch .env
+                            fi
 
-                    php artisan key:generate --force
+                            php artisan key:generate --force
 
-                    mkdir -p database
-                    touch database/database.sqlite
+                            mkdir -p database
+                            touch database/database.sqlite
 
-                    {
-                      echo "DB_CONNECTION=sqlite"
-                      echo "DB_DATABASE=$WORKSPACE/database/database.sqlite"
-                      echo "CACHE_STORE=array"
-                      echo "SESSION_DRIVER=array"
-                      echo "QUEUE_CONNECTION=sync"
-                      echo "MAIL_MAILER=log"
-                    } >> .env
-                '''
+                            {
+                              echo "DB_CONNECTION=sqlite"
+                              echo "DB_DATABASE=$WORKSPACE/database/database.sqlite"
+                              echo "CACHE_STORE=array"
+                              echo "SESSION_DRIVER=array"
+                              echo "QUEUE_CONNECTION=sync"
+                              echo "MAIL_MAILER=log"
+                            } >> .env
+                        '''
+                    }
+                }
             }
         }
 
         stage('Migrate') {
-            agent {
-                docker {
-                    image 'composer:2'
-                    reuseNode true
-                    args '-u root:root'
-                }
-            }
             steps {
-                sh 'php artisan migrate --force'
+                script {
+                    docker.image('composer:2').inside('-u root:root') {
+                        sh 'php artisan migrate --force'
+                    }
+                }
             }
         }
 
         stage('Build Docker image') {
-            agent any
             steps {
                 sh 'docker build -t "${DOCKER_IMAGE}" .'
             }
