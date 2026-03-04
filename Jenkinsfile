@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
 
     options {
         timestamps()
@@ -18,6 +18,7 @@ pipeline {
 
     stages {
         stage('Checkout (GitHub)') {
+            agent any
             steps {
                 deleteDir()
                 git branch: "${params.BRANCH_NAME}", url: "${params.REPO_URL}"
@@ -26,12 +27,26 @@ pipeline {
         }
 
         stage('Install Laravel dependencies') {
+            agent {
+                docker {
+                    image 'composer:2'
+                    reuseNode true
+                    args '-u root:root'
+                }
+            }
             steps {
                 sh 'composer install --no-interaction --prefer-dist'
             }
         }
 
         stage('Prepare Laravel') {
+            agent {
+                docker {
+                    image 'composer:2'
+                    reuseNode true
+                    args '-u root:root'
+                }
+            }
             steps {
                 sh '''
                     if [ -f .env.example ]; then
@@ -58,12 +73,20 @@ pipeline {
         }
 
         stage('Migrate') {
+            agent {
+                docker {
+                    image 'composer:2'
+                    reuseNode true
+                    args '-u root:root'
+                }
+            }
             steps {
                 sh 'php artisan migrate --force'
             }
         }
 
         stage('Build Docker image') {
+            agent any
             steps {
                 sh 'docker build -t "${DOCKER_IMAGE}" .'
             }
