@@ -8,7 +8,7 @@ pipeline {
 
     parameters {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/Mareme20/Isi_Burger.git', description: 'URL du repository GitHub')
-        string(name: 'BRANCH_NAME', defaultValue: 'nom_prenom_burger', description: 'Branche a builder')
+        string(name: 'BRANCH_NAME', defaultValue: 'Marieme_Ndiaye_burger', description: 'Branche a builder')
         string(name: 'DOCKER_IMAGE', defaultValue: 'isi-burger:jenkins', description: 'Nom de l image Docker')
     }
 
