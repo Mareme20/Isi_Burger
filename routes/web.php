@@ -9,6 +9,7 @@ use App\Http\Controllers\CommandeController;
 use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () { return view('welcome'); });
+Route::get('/media/burger/{burger}/image', [BurgerController::class, 'image'])->name('burgers.image');
 
 // --- ROUTES CLIENT ---
 Route::middleware(['auth', 'ensure.app.role', 'role:client'])->group(function () {

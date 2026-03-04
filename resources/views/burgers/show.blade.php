@@ -9,8 +9,8 @@
     <div class="app-section-card p-3 p-md-4">
         <div class="row g-4 align-items-start">
             <div class="col-md-5">
-                @if($burger->image)
-                    <img src="{{ asset('storage/'.$burger->image) }}" class="img-fluid rounded-4 border shadow-sm w-100" style="max-height: 360px; object-fit: cover;" alt="{{ $burger->nom }}">
+                @if($burger->image && $burger->image !== '0')
+                    <img src="{{ route('burgers.image', $burger) }}?v={{ optional($burger->updated_at)->timestamp }}" class="img-fluid rounded-4 border shadow-sm w-100" style="max-height: 360px; object-fit: cover;" alt="{{ $burger->nom }}">
                 @else
                     <div class="border rounded-4 p-5 text-center text-secondary h-100 d-flex align-items-center justify-content-center">Pas d'image</div>
                 @endif

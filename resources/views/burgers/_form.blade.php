@@ -40,10 +40,10 @@
     <input id="image" name="image" type="file" class="form-control">
     @if($errors->get('image'))<div class="text-danger small mt-1">{{ $errors->first('image') }}</div>@endif
 
-    @if(isset($burger) && $burger->image)
+    @if(isset($burger) && $burger->image && $burger->image !== '0')
         <div class="mt-2">
             <small class="text-secondary d-block mb-1">Image actuelle :</small>
-            <img src="{{ asset('storage/'.$burger->image) }}" class="rounded border" style="width: 120px; height: 120px; object-fit: cover;" alt="Image burger actuelle">
+            <img src="{{ route('burgers.image', $burger) }}?v={{ optional($burger->updated_at)->timestamp }}" class="rounded border" style="width: 120px; height: 120px; object-fit: cover;" alt="Image burger actuelle">
         </div>
     @endif
 </div>

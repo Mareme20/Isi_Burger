@@ -17,7 +17,7 @@ class StoreBurgerRequest extends FormRequest
             'nom' => ['required', 'string', 'max:255'],
             'prix' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:12288'],
             'stock' => ['required', 'integer', 'min:0'],
             'category_id' => ['required', 'exists:categories,id'],
         ];

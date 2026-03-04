@@ -7,6 +7,8 @@ use App\Http\Requests\UpdateBurgerRequest;
 use App\Models\Burger;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class BurgerController extends Controller
@@ -43,7 +45,13 @@ class BurgerController extends Controller
     $imagePath = null;
 
     if ($request->hasFile('image')) {
-        $imagePath = $request->file('image')->store('burgers', 'public');
+        $stored = $request->file('image')->store('burgers', 'public');
+        if (! is_string($stored) || $stored === '') {
+            return back()
+                ->withInput()
+                ->withErrors(['image' => "L'image n'a pas pu etre enregistree sur le serveur."]);
+        }
+        $imagePath = $stored;
     }
 
     Burger::create([
@@ -67,6 +75,20 @@ class BurgerController extends Controller
         return view('burgers.show', compact('burger'));
     }
 
+    public function image(Burger $burger)
+    {
+        if (! $burger->image || $burger->image === '0') {
+            abort(404);
+        }
+
+        $path = storage_path('app/public/' . ltrim($burger->image, '/'));
+        if (! File::exists($path)) {
+            abort(404);
+        }
+
+        return response()->file($path);
+    }
+
     /**
      * Show the form for editing the specified resource.
      */
@@ -82,11 +104,21 @@ class BurgerController extends Controller
  public function update(UpdateBurgerRequest $request, Burger $burger)
 {
     $validated = $request->validated();
+    $currentImage = (is_string($burger->image) && $burger->image !== '0') ? $burger->image : null;
 
     if ($request->hasFile('image')) {
-        $validated['image'] = $request->file('image')->store('burgers', 'public');
+        $stored = $request->file('image')->store('burgers', 'public');
+        if (! is_string($stored) || $stored === '') {
+            return back()
+                ->withInput()
+                ->withErrors(['image' => "L'image n'a pas pu etre enregistree sur le serveur."]);
+        }
+        $validated['image'] = $stored;
+        if ($currentImage) {
+            Storage::disk('public')->delete($currentImage);
+        }
     } else {
-        $validated['image'] = $burger->image;
+        $validated['image'] = $currentImage;
     }
 
     $burger->update($validated);

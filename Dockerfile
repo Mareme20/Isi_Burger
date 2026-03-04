@@ -11,6 +11,13 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
+RUN { \
+    echo "upload_max_filesize=12M"; \
+    echo "post_max_size=14M"; \
+    echo "max_file_uploads=20"; \
+    echo "memory_limit=256M"; \
+} > /usr/local/etc/php/conf.d/uploads.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html

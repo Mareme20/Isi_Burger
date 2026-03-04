@@ -184,8 +184,8 @@
                 <div class="col-sm-6 col-xl-4">
                     <article class="cat-card h-100 d-flex flex-column">
                         <div class="cat-media d-flex align-items-center justify-content-center overflow-hidden">
-                            @if($burger->image)
-                                <img src="{{ asset('storage/'.$burger->image) }}" class="w-100 h-100" style="object-fit:cover" alt="{{ $burger->nom }}">
+                            @if($burger->image && $burger->image !== '0')
+                                <img src="{{ route('burgers.image', $burger) }}?v={{ optional($burger->updated_at)->timestamp }}" class="w-100 h-100" style="object-fit:cover" alt="{{ $burger->nom }}">
                             @else
                                 <span class="text-secondary">Pas d'image</span>
                             @endif

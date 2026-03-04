@@ -23,8 +23,8 @@
                     @foreach($burgers as $burger)
                         <tr>
                             <td>
-                                @if($burger->image)
-                                    <img src="{{ asset('storage/'.$burger->image) }}" class="rounded border" style="width:64px;height:64px;object-fit:cover;" alt="{{ $burger->nom }}">
+                                @if($burger->image && $burger->image !== '0')
+                                    <img src="{{ route('burgers.image', $burger) }}?v={{ optional($burger->updated_at)->timestamp }}" class="rounded border" style="width:64px;height:64px;object-fit:cover;" alt="{{ $burger->nom }}">
                                 @else
                                     <span class="text-secondary">Pas d'image</span>
                                 @endif

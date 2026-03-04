@@ -35,7 +35,11 @@ class RegisteredUserController extends Controller
 
     Auth::login($user);
 
-    return redirect(RouteServiceProvider::HOME);
+    if ($user->hasRole('gestionnaire')) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return redirect()->route('catalogue.index');
 }
 
 }

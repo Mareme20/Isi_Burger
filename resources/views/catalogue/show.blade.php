@@ -10,8 +10,8 @@
         <div class="row g-3 align-items-start">
             <div class="col-md-5">
                 <div class="rounded-4 border overflow-hidden" style="height: 320px; background: #fff3e3;">
-                    @if($burger->image)
-                        <img src="{{ asset('storage/'.$burger->image) }}" alt="{{ $burger->nom }}" class="w-100 h-100" style="object-fit: cover;">
+                    @if($burger->image && $burger->image !== '0')
+                        <img src="{{ route('burgers.image', $burger) }}?v={{ optional($burger->updated_at)->timestamp }}" alt="{{ $burger->nom }}" class="w-100 h-100" style="object-fit: cover;">
                     @else
                         <div class="h-100 d-flex align-items-center justify-content-center text-secondary">Pas d'image</div>
                     @endif
@@ -47,4 +47,3 @@
         </div>
     </div>
 </x-app-layout>
-
