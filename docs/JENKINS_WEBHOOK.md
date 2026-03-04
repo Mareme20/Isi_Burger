@@ -48,7 +48,7 @@ Recuperer l URL publique generee, par exemple:
 Puis `Add webhook`.
 
 ## 6) Test de bout en bout
-- Faire un push sur la branche `nom_prenom_burger`.
+- Faire un push sur la branche `Marieme_Ndiaye_burger`.
 - Verifier dans Jenkins que le build se declenche automatiquement.
 - Verifier les stages:
   - Checkout depuis GitHub

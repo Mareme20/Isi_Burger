@@ -11,7 +11,9 @@ use App\Notifications\NouvelleCommandeNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 
 class CommandeController extends Controller
 {
@@ -160,9 +162,26 @@ private function envoyerConfirmationCommande(Commande $commande): void
 
 private function notifierGestionnairesNouvelleCommande(Commande $commande): void
 {
-    $gestionnaires = User::role('gestionnaire')->get();
-    foreach ($gestionnaires as $gestionnaire) {
-        $gestionnaire->notify(new NouvelleCommandeNotification($commande));
+    $emails = User::role('gestionnaire')
+        ->whereNotNull('email')
+        ->pluck('email')
+        ->unique()
+        ->values()
+        ->all();
+
+    if (empty($emails)) {
+        return;
+    }
+
+    try {
+        // Single send for all managers to avoid SMTP rate-limit rejections.
+        Notification::route('mail', $emails)
+            ->notify(new NouvelleCommandeNotification($commande));
+    } catch (\Throwable $e) {
+        Log::error('Echec envoi notification nouvelle commande.', [
+            'commande_id' => $commande->id,
+            'error' => $e->getMessage(),
+        ]);
     }
 }
 
