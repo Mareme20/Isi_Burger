@@ -27,51 +27,58 @@ pipeline {
 
         stage('Install Laravel dependencies') {
             steps {
-                script {
-                    docker.image('composer:2').inside('-u root:root') {
-                        sh 'composer install --no-interaction --prefer-dist'
-                    }
-                }
+                sh '''
+                    docker run --rm \
+                      -u "$(id -u):$(id -g)" \
+                      -v "$PWD":/app \
+                      -w /app \
+                      composer:2 \
+                      composer install --no-interaction --prefer-dist
+                '''
             }
         }
 
         stage('Prepare Laravel') {
             steps {
-                script {
-                    docker.image('composer:2').inside('-u root:root') {
-                        sh '''
-                            if [ -f .env.example ]; then
-                              cp .env.example .env
-                            else
-                              touch .env
-                            fi
+                sh '''
+                    if [ -f .env.example ]; then
+                      cp .env.example .env
+                    else
+                      touch .env
+                    fi
 
-                            php artisan key:generate --force
+                    mkdir -p database
+                    touch database/database.sqlite
 
-                            mkdir -p database
-                            touch database/database.sqlite
+                    {
+                      echo "DB_CONNECTION=sqlite"
+                      echo "DB_DATABASE=$WORKSPACE/database/database.sqlite"
+                      echo "CACHE_STORE=array"
+                      echo "SESSION_DRIVER=array"
+                      echo "QUEUE_CONNECTION=sync"
+                      echo "MAIL_MAILER=log"
+                    } >> .env
 
-                            {
-                              echo "DB_CONNECTION=sqlite"
-                              echo "DB_DATABASE=$WORKSPACE/database/database.sqlite"
-                              echo "CACHE_STORE=array"
-                              echo "SESSION_DRIVER=array"
-                              echo "QUEUE_CONNECTION=sync"
-                              echo "MAIL_MAILER=log"
-                            } >> .env
-                        '''
-                    }
-                }
+                    docker run --rm \
+                      -u "$(id -u):$(id -g)" \
+                      -v "$PWD":/app \
+                      -w /app \
+                      composer:2 \
+                      php artisan key:generate --force
+                '''
             }
         }
 
         stage('Migrate') {
             steps {
-                script {
-                    docker.image('composer:2').inside('-u root:root') {
-                        sh 'php artisan migrate --force'
-                    }
-                }
+                sh '''
+                    docker run --rm \
+                      -u "$(id -u):$(id -g)" \
+                      -v "$PWD":/app \
+                      -w /app \
+                      composer:2 \
+                      php artisan migrate --force
+                '''
             }
         }
 
