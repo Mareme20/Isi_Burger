@@ -93,7 +93,7 @@ pipeline {
                     fi
                 '''
             }
-        }
+        }//
 
         stage('Migrate') {
             steps {
