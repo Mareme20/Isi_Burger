@@ -6,7 +6,7 @@ pipeline {
         disableConcurrentBuilds()
         skipDefaultCheckout(true)
     }
-
+//
     parameters {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/Mareme20/Isi_Burger.git', description: 'URL du repository GitHub')
         string(name: 'BRANCH_NAME', defaultValue: 'Marieme_Ndiaye_burger', description: 'Branche a builder')
