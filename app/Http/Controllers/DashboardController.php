@@ -15,9 +15,8 @@ public function index()
     // 📅 Commandes du jour
     $commandesDuJour = Commande::whereDate('created_at', today())->count();
 
-    // ✅ Commandes validées du jour (payées)
-    $commandesValidees = Commande::whereDate('created_at', today())
-        ->where('statut', 'payee')
+    // ✅ Commandes validées du jour (payées aujourd'hui)
+    $commandesValidees = Paiement::whereDate('date_paiement', today())
         ->count();
 
     // 💰 Recette journalière
