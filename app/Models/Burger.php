@@ -9,6 +9,8 @@ class Burger extends Model
 {
     use HasFactory;
 
+    public const LOW_STOCK_THRESHOLD = 5;
+
     protected $fillable = [
         'nom',
         'prix',
@@ -30,5 +32,15 @@ class Burger extends Model
         return $this->belongsToMany(Commande::class, 'commande_burger')
             ->withPivot('quantite', 'prix_unitaire')
             ->withTimestamps();
+    }
+
+    public function isOutOfStock(): bool
+    {
+        return (int) $this->stock <= 0;
+    }
+
+    public function isLowStock(): bool
+    {
+        return (int) $this->stock > 0 && (int) $this->stock <= self::LOW_STOCK_THRESHOLD;
     }
 }

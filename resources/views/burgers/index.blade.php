@@ -6,6 +6,55 @@
         </div>
     </x-slot>
 
+    <style>
+        .burger-stat {
+            border: 1px solid #efd5b7;
+            border-radius: 1rem;
+            background: linear-gradient(180deg, #fffaf4, #fff4e8);
+            box-shadow: 0 8px 20px rgba(82, 31, 12, .06);
+            padding: 1rem;
+            height: 100%;
+        }
+
+        .burger-stat-title {
+            margin: 0 0 .4rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-size: .72rem;
+            font-weight: 800;
+            color: #7a5242;
+        }
+
+        .burger-stat-value {
+            margin: 0;
+            color: #31170f;
+            font-size: 1.8rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+    </style>
+
+    <section class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="burger-stat">
+                <p class="burger-stat-title">Burgers actifs</p>
+                <p class="burger-stat-value">{{ $stockStats['total'] }}</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="burger-stat">
+                <p class="burger-stat-title">Stock faible</p>
+                <p class="burger-stat-value text-warning">{{ $stockStats['low'] }}</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="burger-stat">
+                <p class="burger-stat-title">Ruptures</p>
+                <p class="burger-stat-value text-danger">{{ $stockStats['out'] }}</p>
+            </div>
+        </div>
+    </section>
+
     <div class="app-section-card p-3 p-md-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -34,6 +83,8 @@
                             <td>
                                 @if($burger->stock <= 0)
                                     <span class="badge text-bg-danger">Rupture</span>
+                                @elseif($burger->stock <= \App\Models\Burger::LOW_STOCK_THRESHOLD)
+                                    <span class="badge text-bg-warning">{{ $burger->stock }} restant(s)</span>
                                 @else
                                     <span class="badge text-bg-success">{{ $burger->stock }}</span>
                                 @endif

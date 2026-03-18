@@ -26,7 +26,7 @@
         .show-card {
             border: 1px solid #efd5b7;
             border-radius: 1rem;
-            background: #fffaf5;
+            background: linear-gradient(180deg, #fffaf4, #fff4e9);
             box-shadow: 0 8px 20px rgba(82, 31, 12, .06);
         }
 
@@ -72,6 +72,52 @@
             color: #bf4600;
             font-weight: 800;
         }
+
+        .show-timeline {
+            border: 1px solid #efd5b7;
+            border-radius: 1rem;
+            background: #fffaf5;
+            box-shadow: 0 8px 20px rgba(82, 31, 12, .06);
+        }
+
+        .show-timeline-item + .show-timeline-item {
+            border-top: 1px dashed #efd5b7;
+        }
+
+        .show-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .8rem;
+        }
+
+        .show-summary-box {
+            border: 1px solid #efd5b7;
+            border-radius: .95rem;
+            background: #fffdf9;
+            padding: .9rem;
+        }
+
+        .show-summary-title {
+            margin: 0 0 .35rem;
+            color: #7f5b4d;
+            font-size: .72rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        .show-summary-value {
+            margin: 0;
+            color: #2f1a12;
+            font-size: 1.15rem;
+            font-weight: 900;
+        }
+
+        @media (max-width: 767.98px) {
+            .show-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 
     @php
@@ -85,6 +131,21 @@
     <section class="show-hero mb-3">
         <h2 class="h5 fw-bold mb-1">Fiche detaillee de commande</h2>
         <p class="show-sub">Consultez les informations client, les lignes de commande et finalisez l'encaissement si necessaire.</p>
+    </section>
+
+    <section class="show-summary-grid mb-3">
+        <div class="show-summary-box">
+            <p class="show-summary-title">Commande</p>
+            <p class="show-summary-value">CMD-{{ $commande->id }}</p>
+        </div>
+        <div class="show-summary-box">
+            <p class="show-summary-title">Total</p>
+            <p class="show-summary-value">{{ number_format($commande->total, 0, ',', ' ') }} FCFA</p>
+        </div>
+        <div class="show-summary-box">
+            <p class="show-summary-title">Statut actuel</p>
+            <p class="show-summary-value text-capitalize">{{ str_replace('_', ' ', $commande->statut) }}</p>
+        </div>
     </section>
 
     <section class="row g-3 mb-3">
@@ -107,11 +168,35 @@
             <div class="show-card p-3 h-100">
                 <h3 class="h6 fw-bold mb-3">Statut et paiement</h3>
 
+                <p class="show-label">Gestionnaire</p>
+                @if($commande->gestionnaire)
+                    <p class="show-value">{{ $commande->gestionnaire->name }} <br><small class="text-secondary fw-normal">{{ $commande->gestionnaire->email }}</small></p>
+                @else
+                    <p class="show-value">Non attribuee</p>
+                @endif
+
+                <form action="{{ route('admin.commandes.assign', $commande) }}" method="POST" class="mb-3">
+                    @csrf
+                    <label for="gestionnaire_id" class="show-label">Attribuer a</label>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <select id="gestionnaire_id" name="gestionnaire_id" class="form-select" style="max-width: 320px;">
+                            @foreach($gestionnaires as $gestionnaire)
+                                <option value="{{ $gestionnaire->id }}" @selected(($commande->gestionnaire_id ?? auth()->id()) === $gestionnaire->id)>
+                                    {{ $gestionnaire->name }} - {{ $gestionnaire->email }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-outline-primary btn-sm">Mettre a jour</button>
+                    </div>
+                </form>
+
                 <p class="show-label">Statut</p>
                 <p class="show-value text-capitalize">{{ str_replace('_', ' ', $commande->statut) }}</p>
 
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    @if($nextStatut)
+                    @if($commande->gestionnaire_id && $commande->gestionnaire_id !== auth()->id())
+                        <span class="show-pill show-no">Attribuee a un autre gestionnaire</span>
+                    @elseif($nextStatut)
                         <form action="{{ route('admin.commandes.updateStatut', $commande) }}" method="POST">
                             @csrf
                             <input type="hidden" name="statut" value="{{ $nextStatut }}">
@@ -176,16 +261,42 @@
         </div>
     </section>
 
-    <div class="d-flex justify-content-between flex-wrap gap-2">
+    <section class="show-timeline p-3 mb-3">
+        <h3 class="h6 fw-bold mb-3">Historique de la commande</h3>
+
+        @forelse($commande->historiques as $historique)
+            <div class="show-timeline-item py-3">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                    <div>
+                        <p class="fw-bold mb-1">{{ $historique->description }}</p>
+                        <p class="text-secondary small mb-0">
+                            {{ $historique->user?->name ?? 'Systeme' }}
+                            @if($historique->user?->email)
+                                • {{ $historique->user->email }}
+                            @endif
+                        </p>
+                    </div>
+                    <span class="text-secondary small">{{ $historique->created_at->format('d/m/Y H:i') }}</span>
+                </div>
+            </div>
+        @empty
+            <p class="text-secondary mb-0">Aucun historique disponible pour le moment.</p>
+        @endforelse
+    </section>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 app-section-card p-3">
         <a href="{{ route('admin.commandes.index') }}" class="btn btn-light border">Retour</a>
-        @if(!$commande->is_paid && $commande->statut !== 'annulee')
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payerCommandeDetailModal">
-                Enregistrer le paiement
-            </button>
-        @endif
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.commandes.export.csv', ['q' => $commande->id]) }}" class="btn btn-outline-dark">Exporter cette commande</a>
+            @if(!$commande->is_paid && $commande->statut !== 'annulee' && (! $commande->gestionnaire_id || $commande->gestionnaire_id === auth()->id()))
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payerCommandeDetailModal">
+                    Enregistrer le paiement
+                </button>
+            @endif
+        </div>
     </div>
 
-    @if(!$commande->is_paid && $commande->statut !== 'annulee')
+    @if(!$commande->is_paid && $commande->statut !== 'annulee' && (! $commande->gestionnaire_id || $commande->gestionnaire_id === auth()->id()))
         <div class="modal fade" id="payerCommandeDetailModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">

@@ -39,7 +39,11 @@ Route::middleware(['auth', 'ensure.app.role', 'role:gestionnaire'])->group(funct
 
     // Commandes
     Route::get('/admin/commandes', [CommandeController::class, 'index'])->name('admin.commandes.index');
+    Route::get('/admin/commandes/export/csv', [CommandeController::class, 'exportCsv'])->name('admin.commandes.export.csv');
+    Route::get('/admin/commandes/live-summary', [CommandeController::class, 'liveSummary'])->name('admin.commandes.live-summary');
     Route::get('/admin/commandes/{commande}', [CommandeController::class, 'show'])->name('admin.commandes.show');
+    Route::post('/admin/commandes/{commande}/assigner', [CommandeController::class, 'assignToMe'])
+        ->name('admin.commandes.assign');
     
     // CORRECTION ICI : Une seule route POST pour le statut
     Route::post('/admin/commandes/{commande}/statut', [CommandeController::class, 'updateStatut'])

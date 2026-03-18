@@ -40,4 +40,14 @@ class Commande extends Model
     {
         return $this->hasOne(Paiement::class);
     }
+
+    public function historiques()
+    {
+        return $this->hasMany(CommandeHistorique::class)->latest();
+    }
+
+    public function latestHistorique()
+    {
+        return $this->hasOne(CommandeHistorique::class)->latestOfMany();
+    }
 }

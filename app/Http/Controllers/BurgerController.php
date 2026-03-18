@@ -16,14 +16,24 @@ class BurgerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+public function index()
 {
     $burgers = Burger::with('category')
         ->where('is_archived', false)
         ->latest()
         ->paginate(10);
 
-    return view('burgers.index', compact('burgers'));
+    $stockStats = [
+        'total' => Burger::where('is_archived', false)->count(),
+        'low' => Burger::where('is_archived', false)
+            ->whereBetween('stock', [1, Burger::LOW_STOCK_THRESHOLD])
+            ->count(),
+        'out' => Burger::where('is_archived', false)
+            ->where('stock', '<=', 0)
+            ->count(),
+    ];
+
+    return view('burgers.index', compact('burgers', 'stockStats'));
 }
 
     /**
