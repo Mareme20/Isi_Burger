@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Burger;
 use App\Models\Category;
+use App\Support\Panier;
 use Illuminate\Http\Request;
 
 class CatalogueController extends Controller
@@ -30,8 +31,9 @@ class CatalogueController extends Controller
 
         $burgers = $query->paginate(9)->withQueryString();
         $categories = Category::all();
+        $panier = Panier::summary();
 
-        return view('catalogue.index', compact('burgers', 'categories'));
+        return view('catalogue.index', compact('burgers', 'categories', 'panier'));
     }
 
     public function show(Burger $burger)
@@ -41,7 +43,8 @@ class CatalogueController extends Controller
         }
 
         $burger->load('category');
+        $panier = Panier::summary();
 
-        return view('catalogue.show', compact('burger'));
+        return view('catalogue.show', compact('burger', 'panier'));
     }
 }

@@ -242,6 +242,10 @@
             text-decoration: underline;
         }
 
+        [x-cloak] {
+            display: none !important;
+        }
+
         @media (max-width: 991.98px) {
             .app-sidebar {
                 display: none;
@@ -254,19 +258,25 @@
     </style>
 </head>
 <body>
+    @php($user = auth()->user())
+
     <div class="app-shell">
         <aside class="app-sidebar d-none d-lg-flex flex-column justify-content-between">
             <div>
-                <a href="{{ Auth::user()->hasRole('gestionnaire') ? route('admin.dashboard') : route('catalogue.index') }}" class="app-brand">
+                <a href="{{ $user && $user->hasRole('gestionnaire') ? route('admin.dashboard') : route('catalogue.index') }}" class="app-brand">
                     <x-application-logo class="rounded" style="width: 42px; height: 42px;" />
                     <div>
                         <div class="app-brand-name">{{ config('app.name', 'ISI Burger') }}</div>
-                        <div class="app-brand-sub">Espace connecte</div>
+                        <div class="app-brand-sub">{{ $user ? 'Espace connecte' : 'Catalogue public' }}</div>
                     </div>
                 </a>
 
                 <div class="app-menu-title">Navigation</div>
                 <nav>
+                    @guest
+                        <a href="{{ route('catalogue.index') }}" class="app-menu-link {{ request()->routeIs('catalogue.*') ? 'active' : '' }}">Catalogue</a>
+                    @endguest
+
                     @role('gestionnaire')
                         <a href="{{ route('admin.dashboard') }}" class="app-menu-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
                         <a href="{{ route('admin.commandes.index') }}" class="app-menu-link {{ request()->routeIs('admin.commandes.*') ? 'active' : '' }}">Commandes</a>
@@ -281,14 +291,22 @@
                 </nav>
             </div>
 
-            <div class="app-user">
-                <div class="app-user-name">{{ Auth::user()->name }}</div>
-                <div class="app-user-role">{{ Auth::user()->roles->pluck('name')->first() }}</div>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="btn app-logout w-100">Se deconnecter</button>
-                </form>
-            </div>
+            @auth
+                <div class="app-user">
+                    <div class="app-user-name">{{ $user->name }}</div>
+                    <div class="app-user-role">{{ $user->roles->pluck('name')->first() }}</div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="btn app-logout w-100">Se deconnecter</button>
+                    </form>
+                </div>
+            @else
+                <div class="app-user">
+                    <div class="app-user-name">Visiteur</div>
+                    <div class="app-user-role">Catalogue public</div>
+                    <a href="{{ route('login') }}" class="btn app-logout w-100">Se connecter</a>
+                </div>
+            @endauth
         </aside>
 
         <div class="app-main">
@@ -309,6 +327,91 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        if (!window.__panierAjaxInit) {
+            window.__panierAjaxInit = true;
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            async function submitPanierForm(form) {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: form.method || 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken ?? '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw data;
+                }
+
+                updatePanierUi(data);
+            }
+
+            function updatePanierUi(data) {
+                const panelContent = document.querySelector('#panier-panel-content');
+                if (panelContent && typeof data.html === 'string') {
+                    panelContent.innerHTML = data.html;
+                }
+
+                document.querySelectorAll('[data-panier-count]').forEach((element) => {
+                    element.textContent = data.count ?? 0;
+                });
+
+                showPanierFlash(data.message, data.type ?? 'success');
+            }
+
+            function showPanierFlash(message, type) {
+                let flash = document.querySelector('#panier-ajax-flash');
+
+                if (!flash) {
+                    flash = document.createElement('div');
+                    flash.id = 'panier-ajax-flash';
+                    flash.style.position = 'fixed';
+                    flash.style.top = '1rem';
+                    flash.style.right = '1rem';
+                    flash.style.zIndex = '1080';
+                    flash.style.maxWidth = '360px';
+                    document.body.appendChild(flash);
+                }
+
+                flash.className = type === 'error' ? 'auth-flash auth-flash-error' : 'auth-flash auth-flash-success';
+                flash.textContent = message;
+
+                window.clearTimeout(flash._timeoutId);
+                flash._timeoutId = window.setTimeout(() => {
+                    flash.textContent = '';
+                    flash.className = '';
+                }, 2600);
+            }
+
+            document.addEventListener('submit', async (event) => {
+                const form = event.target.closest('form[data-panier-form]');
+                if (!form) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                try {
+                    await submitPanierForm(form);
+                } catch (error) {
+                    const validationMessage = error?.message
+                        || error?.errors?.quantite?.[0]
+                        || error?.errors?.burger?.[0]
+                        || 'Une erreur est survenue pendant la mise a jour du panier.';
+
+                    showPanierFlash(validationMessage, 'error');
+                }
+            });
+        }
+    </script>
     @stack('scripts')
     @yield('scripts')
 </body>

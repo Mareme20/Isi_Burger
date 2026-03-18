@@ -97,7 +97,7 @@ php artisan storage:link
 php artisan serve
 ```
 
-Application: `http://127.0.0.1:8000`
+Application: `http://127.0.0.1:8002`
 
 ---
 
@@ -225,6 +225,8 @@ docker compose restart app
 ```
 
 ---
+pour lancer ngrok
+ngrok http 8000
 
 ## Auteur
 Projet realise pour le module interne ISI - Gestion des commandes ISI BURGER.

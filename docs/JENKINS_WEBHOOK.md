@@ -16,7 +16,7 @@
 - Dans `Pipeline`, choisir `Pipeline script from SCM`.
 - `SCM`: `Git`.
 - Repository URL: votre repo GitHub.
-- Branch Specifier: `*/nom_prenom_burger`.
+- Branch Specifier: `*/Marieme_Ndiaye_burger`.
 - Script Path: `Jenkinsfile`.
 - Sauvegarder.
 

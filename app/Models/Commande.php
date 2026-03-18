@@ -11,6 +11,7 @@ class Commande extends Model
 
     protected $fillable = [
         'user_id',
+        'gestionnaire_id',
         'statut',
         'total',
         'is_paid',
@@ -20,6 +21,11 @@ class Commande extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function gestionnaire()
+    {
+        return $this->belongsTo(User::class, 'gestionnaire_id');
     }
 
     public function burgers()

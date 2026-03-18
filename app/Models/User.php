@@ -26,6 +26,11 @@ public function commandes()
     return $this->hasMany(Commande::class);
 }
 
+public function commandesGerees()
+{
+    return $this->hasMany(Commande::class, 'gestionnaire_id');
+}
+
     /**
      * The attributes that should be hidden for serialization.
      *

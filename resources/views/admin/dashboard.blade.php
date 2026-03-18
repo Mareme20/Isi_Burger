@@ -3,7 +3,7 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
                 <h1 class="h4 mb-1 fw-bold">Tableau de bord gestionnaire</h1>
-                <p class="mb-0 text-secondary small">Suivi des performances quotidiennes de ISI BURGER.</p>
+                <p class="mb-0 text-secondary small">Suivi de vos propres performances de gestionnaire.</p>
             </div>
             <a href="{{ route('admin.commandes.index') }}" class="btn btn-light border rounded-pill px-3">Voir les commandes</a>
         </div>
@@ -103,8 +103,8 @@
     </style>
 
     <section class="dash-hero mb-3">
-        <h2 class="h5 fw-bold mb-1">Vue globale de l'activite</h2>
-        <p class="dash-sub">Analysez les commandes du jour, les paiements et la repartition des produits par categorie en un coup d'oeil.</p>
+        <h2 class="h5 fw-bold mb-1">Vue de votre activite</h2>
+        <p class="dash-sub">Les indicateurs ci-dessous ne concernent que les commandes que vous avez prises en charge en tant que gestionnaire.</p>
     </section>
 
     <section class="row g-3 mb-3">

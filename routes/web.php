@@ -11,10 +11,16 @@ use App\Http\Controllers\DashboardController;
 Route::get('/', function () { return view('welcome'); });
 Route::get('/media/burger/{burger}/image', [BurgerController::class, 'image'])->name('burgers.image');
 
+// --- ROUTES PUBLIQUES ---
+Route::get('/catalogue', [CatalogueController::class, 'index'])->name('catalogue.index');
+Route::get('/catalogue/{burger}', [CatalogueController::class, 'show'])->name('catalogue.show');
+Route::post('/panier/vider', [CommandeController::class, 'clearCart'])->name('panier.clear');
+Route::post('/panier/{burger}', [CommandeController::class, 'addToCart'])->name('panier.add');
+Route::post('/panier/{burger}/quantite', [CommandeController::class, 'updateCart'])->name('panier.update');
+Route::post('/panier/{burger}/supprimer', [CommandeController::class, 'removeFromCart'])->name('panier.remove');
+
 // --- ROUTES CLIENT ---
 Route::middleware(['auth', 'ensure.app.role', 'role:client'])->group(function () {
-    Route::get('/catalogue', [CatalogueController::class, 'index'])->name('catalogue.index');
-    Route::get('/catalogue/{burger}', [CatalogueController::class, 'show'])->name('catalogue.show');
     Route::post('/commandes/store', [CommandeController::class, 'store'])->name('commandes.store');
     Route::get('/mes-commandes', [CommandeController::class, 'mesCommandes'])->name('commandes.mes');
 });

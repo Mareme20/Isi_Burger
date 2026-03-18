@@ -74,6 +74,14 @@
         }
     </style>
 
+    @php
+        $nextStatut = match($commande->statut) {
+            'en_attente' => 'en_preparation',
+            'en_preparation' => 'prete',
+            default => null,
+        };
+    @endphp
+
     <section class="show-hero mb-3">
         <h2 class="h5 fw-bold mb-1">Fiche detaillee de commande</h2>
         <p class="show-sub">Consultez les informations client, les lignes de commande et finalisez l'encaissement si necessaire.</p>
@@ -101,6 +109,28 @@
 
                 <p class="show-label">Statut</p>
                 <p class="show-value text-capitalize">{{ str_replace('_', ' ', $commande->statut) }}</p>
+
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    @if($nextStatut)
+                        <form action="{{ route('admin.commandes.updateStatut', $commande) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="statut" value="{{ $nextStatut }}">
+                            <button type="submit" class="btn btn-outline-dark btn-sm">
+                                Passer a {{ str_replace('_', ' ', $nextStatut) }}
+                            </button>
+                        </form>
+
+                        <form action="{{ route('admin.commandes.updateStatut', $commande) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="statut" value="annulee">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Annuler</button>
+                        </form>
+                    @elseif($commande->statut === 'annulee')
+                        <span class="show-pill show-no">Statut verrouille</span>
+                    @else
+                        <span class="show-pill show-ok">Statut final</span>
+                    @endif
+                </div>
 
                 <p class="show-label">Paiement</p>
                 <p class="mb-0">
@@ -148,11 +178,44 @@
 
     <div class="d-flex justify-content-between flex-wrap gap-2">
         <a href="{{ route('admin.commandes.index') }}" class="btn btn-light border">Retour</a>
-        @if(!$commande->is_paid)
-            <form action="{{ route('admin.commandes.payer', $commande) }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-success">Enregistrer le paiement</button>
-            </form>
+        @if(!$commande->is_paid && $commande->statut !== 'annulee')
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payerCommandeDetailModal">
+                Enregistrer le paiement
+            </button>
         @endif
     </div>
+
+    @if(!$commande->is_paid && $commande->statut !== 'annulee')
+        <div class="modal fade" id="payerCommandeDetailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5">Encaisser la commande #{{ $commande->id }}</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <form action="{{ route('admin.commandes.payer', $commande) }}" method="POST">
+                        @csrf
+                        <div class="modal-body">
+                            <p class="mb-2">Total attendu: <strong>{{ number_format($commande->total, 0, ',', ' ') }} FCFA</strong></p>
+                            <label for="montant_detail" class="form-label fw-semibold">Montant a payer</label>
+                            <input
+                                id="montant_detail"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="montant"
+                                value="{{ old('montant', $commande->total) }}"
+                                class="form-control"
+                                required
+                            >
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Fermer</button>
+                            <button type="submit" class="btn btn-success">Confirmer le paiement</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 </x-app-layout>

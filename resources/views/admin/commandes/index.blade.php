@@ -73,10 +73,8 @@
         .adm-ok { color: #166534; background: #dcfce7; border-color: #bcead0; }
         .adm-no { color: #991b1b; background: #fee2e2; border-color: #f4c0c0; }
 
-        .adm-select {
+        .adm-next {
             min-width: 170px;
-            border-radius: .72rem;
-            border-color: #e6c5a6;
         }
     </style>
 
@@ -88,7 +86,7 @@
 
     <section class="adm-hero mb-3">
         <h2 class="h5 fw-bold mb-1">Pilotage des commandes ISI BURGER</h2>
-        <p class="adm-sub">Mettez a jour les statuts, encaissez les commandes et suivez les details en temps reel.</p>
+        <p class="adm-sub">Le gestionnaire fait avancer une commande de en attente a en preparation puis a prete. Si elle est annulee, elle est verrouillee.</p>
     </section>
 
     <section class="row g-2 mb-3">
@@ -128,6 +126,13 @@
                 </thead>
                 <tbody>
                     @forelse($commandes as $commande)
+                        @php
+                            $nextStatut = match($commande->statut) {
+                                'en_attente' => 'en_preparation',
+                                'en_preparation' => 'prete',
+                                default => null,
+                            };
+                        @endphp
                         <tr>
                             <td class="adm-id">CMD-{{ $commande->id }}</td>
                             <td>
@@ -141,15 +146,31 @@
                             </td>
                             <td class="adm-total">{{ number_format($commande->total, 0, ',', ' ') }} FCFA</td>
                             <td>
-                                <form action="{{ route('admin.commandes.updateStatut', $commande) }}" method="POST">
-                                    @csrf
-                                    <select name="statut" class="form-select form-select-sm adm-select" onchange="this.form.submit()">
-                                        <option value="en_attente" {{ $commande->statut == 'en_attente' ? 'selected' : '' }}>En attente</option>
-                                        <option value="en_preparation" {{ $commande->statut == 'en_preparation' ? 'selected' : '' }}>En preparation</option>
-                                        <option value="prete" {{ $commande->statut == 'prete' ? 'selected' : '' }}>Prete (Facture)</option>
-                                        <option value="annulee" {{ $commande->statut == 'annulee' ? 'selected' : '' }}>Annulee</option>
-                                    </select>
-                                </form>
+                                <div class="d-grid gap-2">
+                                    <span class="adm-pill {{ $commande->statut === 'annulee' ? 'adm-no' : 'adm-ok' }}">
+                                        {{ str_replace('_', ' ', $commande->statut) }}
+                                    </span>
+
+                                    @if($nextStatut)
+                                        <form action="{{ route('admin.commandes.updateStatut', $commande) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="statut" value="{{ $nextStatut }}">
+                                            <button type="submit" class="btn btn-outline-dark btn-sm adm-next">
+                                                Passer a {{ str_replace('_', ' ', $nextStatut) }}
+                                            </button>
+                                        </form>
+
+                                        <form action="{{ route('admin.commandes.updateStatut', $commande) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="statut" value="annulee">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm adm-next">Annuler</button>
+                                        </form>
+                                    @elseif($commande->statut === 'annulee')
+                                        <small class="text-danger fw-semibold">Statut verrouille</small>
+                                    @else
+                                        <small class="text-secondary fw-semibold">Aucune autre modification autorisee</small>
+                                    @endif
+                                </div>
                             </td>
                             <td>
                                 @if($commande->is_paid)
@@ -157,11 +178,48 @@
                                 @else
                                     <span class="adm-pill adm-no">Non payee</span>
                                     <div class="mt-1">
-                                        <form action="{{ route('admin.commandes.payer', $commande) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            <button type="submit" class="btn btn-outline-success btn-sm">Encaisser</button>
-                                        </form>
+                                        @if($commande->statut !== 'annulee')
+                                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#payerCommandeModal{{ $commande->id }}">
+                                                Encaisser
+                                            </button>
+                                        @else
+                                            <small class="text-danger fw-semibold d-block mt-1">Paiement indisponible</small>
+                                        @endif
                                     </div>
+
+                                    @if($commande->statut !== 'annulee')
+                                        <div class="modal fade" id="payerCommandeModal{{ $commande->id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h2 class="modal-title fs-5">Encaisser CMD-{{ $commande->id }}</h2>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                                    </div>
+                                                    <form action="{{ route('admin.commandes.payer', $commande) }}" method="POST">
+                                                        @csrf
+                                                        <div class="modal-body">
+                                                            <p class="mb-2">Total attendu: <strong>{{ number_format($commande->total, 0, ',', ' ') }} FCFA</strong></p>
+                                                            <label for="montant_{{ $commande->id }}" class="form-label fw-semibold">Montant a payer</label>
+                                                            <input
+                                                                id="montant_{{ $commande->id }}"
+                                                                type="number"
+                                                                step="0.01"
+                                                                min="0"
+                                                                name="montant"
+                                                                value="{{ old('montant', $commande->total) }}"
+                                                                class="form-control"
+                                                                required
+                                                            >
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Fermer</button>
+                                                            <button type="submit" class="btn btn-success">Confirmer le paiement</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
                             <td>

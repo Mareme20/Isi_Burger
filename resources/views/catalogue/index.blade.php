@@ -2,7 +2,11 @@
     <x-slot name="header">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h1 class="h4 mb-0 fw-bold">Catalogue des burgers</h1>
-            <a href="{{ route('commandes.mes') }}" class="btn btn-light border rounded-pill px-3">Mes commandes</a>
+            @auth
+                <a href="{{ route('commandes.mes') }}" class="btn btn-light border rounded-pill px-3">Mes commandes</a>
+            @else
+                <a href="{{ route('login') }}" class="btn btn-light border rounded-pill px-3">Se connecter pour commander</a>
+            @endauth
         </div>
     </x-slot>
 
@@ -81,8 +85,7 @@
             font-weight: 800;
         }
 
-        .cat-stock-ok,
-        .cat-stock-ko {
+        .cat-stock-ok {
             display: inline-flex;
             align-items: center;
             gap: .35rem;
@@ -90,18 +93,9 @@
             font-size: .75rem;
             font-weight: 700;
             padding: .32rem .58rem;
-        }
-
-        .cat-stock-ok {
             color: #166534;
             background: #dcfce7;
             border: 1px solid #b7eac7;
-        }
-
-        .cat-stock-ko {
-            color: #991b1b;
-            background: #fee2e2;
-            border: 1px solid #f4c0c0;
         }
 
         .cat-qty {
@@ -122,10 +116,79 @@
             box-shadow: 0 10px 20px rgba(200, 78, 9, .22);
         }
 
-        .cat-btn:disabled {
-            background: #dc2626;
-            box-shadow: none;
-            opacity: .7;
+        .cat-layout {
+            display: block;
+        }
+
+        .cat-cart-fab {
+            position: fixed;
+            right: 1.1rem;
+            bottom: 1.1rem;
+            z-index: 1050;
+            width: 64px;
+            height: 64px;
+            border: 0;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #2f1a12, #e85d04);
+            color: #fff;
+            box-shadow: 0 18px 40px rgba(82, 31, 12, .28);
+        }
+
+        .cat-cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -2px;
+            min-width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff7ed;
+            color: #bf4600;
+            font-size: .76rem;
+            font-weight: 800;
+            border: 2px solid #ffd4aa;
+        }
+
+        .cat-cart-panel {
+            position: fixed;
+            right: 1rem;
+            bottom: 5.9rem;
+            z-index: 1045;
+            width: min(420px, calc(100vw - 1.5rem));
+            max-height: min(78vh, 720px);
+            overflow: auto;
+        }
+
+        .cat-cart-card {
+            border: 1px solid #efd3b5;
+            border-radius: 1rem;
+            background: #fffaf5;
+            padding: 1rem;
+            box-shadow: 0 8px 20px rgba(82, 31, 12, .06);
+        }
+
+        .cat-cart-item {
+            border: 1px solid #f1dcc5;
+            border-radius: .95rem;
+            padding: .85rem;
+            background: #fff;
+        }
+
+        .cat-cart-total {
+            border-top: 1px dashed #dfc1a0;
+            padding-top: .85rem;
+            font-size: 1.02rem;
+        }
+
+        @media (max-width: 991.98px) {
+            .cat-cart-panel {
+                right: .75rem;
+                left: .75rem;
+                width: auto;
+                bottom: 5.6rem;
+            }
         }
     </style>
 
@@ -135,7 +198,7 @@
 
     <section class="cat-hero mb-3">
         <h2 class="cat-hero-title">Des recettes genereuses, preparees minute</h2>
-        <p class="cat-hero-text">Filtrez votre burger ideal, choisissez la quantite, puis commandez en un clic. {{ $totalBurgers }} burger(s) disponible(s) actuellement.</p>
+        <p class="cat-hero-text">Ajoutez vos burgers au panier, ajustez les quantites, supprimez un article si besoin et retrouvez votre resume de commande meme apres avoir change de page. {{ $totalBurgers }} burger(s) disponible(s) actuellement.</p>
     </section>
 
     <section class="cat-filter-box p-3 p-md-4 mb-3">
@@ -167,21 +230,10 @@
         </form>
     </section>
 
-    <form method="POST" action="{{ route('commandes.store') }}" class="d-grid gap-3">
-        @csrf
-
-        @if($errors->has('items'))
-            <div class="auth-flash auth-flash-error mb-0">{{ $errors->first('items') }}</div>
-        @endif
-
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <p class="small text-secondary mb-0">Definissez la quantite pour chaque burger (0 = non selectionne).</p>
-            <button class="cat-btn">Passer la commande</button>
-        </div>
-
+    <section class="cat-layout">
         <section class="row g-3">
             @forelse($burgers as $burger)
-                <div class="col-sm-6 col-xl-4">
+                <div class="col-sm-6 col-xl-6">
                     <article class="cat-card h-100 d-flex flex-column">
                         <div class="cat-media d-flex align-items-center justify-content-center overflow-hidden">
                             @if($burger->image && $burger->image !== '0')
@@ -203,24 +255,28 @@
 
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="cat-price">{{ number_format($burger->prix, 0, ',', ' ') }} FCFA</span>
-                                @if($burger->stock > 0)
-                                    <span class="cat-stock-ok">Stock: {{ $burger->stock }}</span>
-                                @else
-                                    <span class="cat-stock-ko">Rupture</span>
-                                @endif
+                                <span class="cat-stock-ok">Stock: {{ $burger->stock }}</span>
                             </div>
 
                             <div class="mt-auto d-grid gap-2">
                                 <a href="{{ route('catalogue.show', $burger) }}" class="btn btn-light border rounded-3">Voir details</a>
-                                <input
-                                    type="number"
-                                    name="items[{{ $burger->id }}]"
-                                    min="0"
-                                    max="{{ $burger->stock }}"
-                                    value="{{ old('items.'.$burger->id, 0) }}"
-                                    class="form-control cat-qty w-100"
-                                    @disabled($burger->stock <= 0)
-                                >
+
+                                <form method="POST" action="{{ route('panier.add', $burger) }}" class="d-flex gap-2 align-items-end" data-panier-form>
+                                    @csrf
+                                    <div class="flex-grow-1">
+                                        <label for="quantite_{{ $burger->id }}" class="form-label fw-semibold small">Quantite</label>
+                                        <input
+                                            id="quantite_{{ $burger->id }}"
+                                            type="number"
+                                            name="quantite"
+                                            min="1"
+                                            max="{{ $burger->stock }}"
+                                            value="1"
+                                            class="form-control cat-qty w-100"
+                                        >
+                                    </div>
+                                    <button type="submit" class="cat-btn">Ajouter</button>
+                                </form>
                             </div>
                         </div>
                     </article>
@@ -231,7 +287,22 @@
                 </div>
             @endforelse
         </section>
-    </form>
+    </section>
+
+    <div x-data="{ open: false }" class="cat-cart-ui">
+        <button type="button" class="cat-cart-fab" @click="open = !open" aria-label="Afficher le panier">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .49.402L2.89 3H14.5a.5.5 0 0 1 .49.598l-1.5 7A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.49-.402L1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 6h8.183l1.286-6zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m5 2a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
+            </svg>
+            <span class="cat-cart-badge" data-panier-count>{{ $panier['count'] }}</span>
+        </button>
+
+        <div class="cat-cart-panel" x-show="open" x-transition.opacity x-cloak @click.outside="open = false">
+            <div id="panier-panel-content">
+                @include('catalogue._panier')
+            </div>
+        </div>
+    </div>
 
     <div class="mt-3">
         {{ $burgers->links() }}
